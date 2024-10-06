@@ -31,7 +31,9 @@ async function main() {
 -  병렬적으로 비동기 작업을 수행하면서, 항상 각 프로미스의 실행 결과를 알고 싶다면 `
 Promise.allSettled()` 메서드를 사용한다.
 
-<h3>실행 결과</h3>
+><h3>실행 결과</h3>
+
+![스크린샷 2024-10-06 163008](https://github.com/user-attachments/assets/d16be18d-9c06-4086-8460-79507feb47d5)
 
 <h2>Next.js와 비동기 에러 처리</h2>
 
@@ -90,6 +92,8 @@ export default WorkspaceListAPI;
 - 그렇다면 의도한데로 error를 처리하였을까??
 
 ><h3>결과</h3>
+
+![에러처리결과](https://github.com/user-attachments/assets/bc3621a8-2f83-4110-a13a-279f1a0b0e10)
 
 - 의도와는 다른게 catch에서 error를 헨들링 하지 못하였다
 - Promise 객체 자체는 정상적으로 fufilled 되었고, http status 또한 200으로 성공적인 통신을 하였기 때문에
