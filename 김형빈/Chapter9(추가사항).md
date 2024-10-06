@@ -33,4 +33,64 @@ Promise.allSettled()` 메서드를 사용한다.
 
 <h3>실행 결과</h3>
 
+<h2>Next.js와 비동기 에러 처리</h2>
 
+```ts
+//workspace-list/route.ts
+export const GET = async (request: NextRequest) => {
+  try {
+    const {data, error} = await supabase.from("example");
+    if(error){
+        return NextResponse.json({
+        message: 'Failed to fetch data',
+        error,
+        status: false,
+        statusCode: 500
+        });
+    }
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({
+      message: 'Failed to fetch data',
+      error,
+      status: false,
+      statusCode: 500
+    });
+  }
+};
+```
+
+```ts
+//workspaceListAPI.ts
+class WorkspaceListAPI {
+  private axios: AxiosInstance;
+
+  constructor(axios: AxiosInstance) {
+    this.axios = axios;
+  }
+  async getWorkspaceList(workspaceId: number, userId: string): Promise<TWorkSpaceListType> {
+    try {
+      const path = 'api/workspace-list';
+      const response = await this.axios.get(path, {
+        params: { workspaceId, userId }
+      });
+      return response.data;
+    } catch (error) {
+      console.log(error);
+      return error;
+    }
+  }
+}
+
+export default WorkspaceListAPI;
+```
+
+- WorkConnect 프로젝트 당시의 api route.ts 코드
+- route.ts에서 supabase와 통신하는 과정에서 오류가 생긴다면 NextResponse를 전송하여 오류가 발생하였음을 전달하였다.
+- 그렇다면 의도한데로 error를 처리하였을까??
+
+><h3>결과</h3>
+
+- 의도와는 다른게 catch에서 error를 헨들링 하지 못하였다
+- Promise 객체 자체는 정상적으로 fufilled 되었고, http status 또한 200으로 성공적인 통신을 하였기 때문에
+- 따라서 위와 같은 경우에는 비동기 에러 처리를 try-catch가 아닌 별도의 에러 헨들링이 필요하다.
