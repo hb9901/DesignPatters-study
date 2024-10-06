@@ -713,7 +713,34 @@ async function main() {
   - 이 반환된 새로운 함수는 main 함수의 로직을 실행하면서, 추가적인 로직(로깅)을 포함한다.
   - 즉, main 함수가 실행되기 전에 "Starting async function..." 메시지가 출력되고, main 함수가 완료된 후에 "Async function completed" 메시지가 출력된다.
 
+<br>
+
+- #### 추가예제
+
+```js
+function asyncDecorator(fn) {
+  return async function (...args) {
+    try {
+      return await fn(...args);
+    } catch (error) {
+      throw error;
+    }
+  };
+}
+
+const makeRequest = asyncDecorator(async function (url) {
+  const response = await fetch(url);
+  const data = await response.json();
+  return data;
+});
+
+makeRequest("http://example.com/").then((data) => {
+  console.log(data);
+});
+```
+
 ### 🤔 데코레이터
 
 - 함수나 클래스의 선언에 추가적인 동작을 정의할 때 사용된다.
 - 함수 / 클래스의 선언을 감싸서 실행되며, 원래 함수가 호출되기 전에 데코레이터 함수가 먼저 호출된다.
+- 데코레이터는 현재 ECMAScript 표준의 일부로, 공식 채택되지는 않았지만 실험적 기능으로 자바스크립트 개발 환경에서 사용될 수 있다. 타입스크립트나 Babel과 같은 트랜스파일러를 사용하면 데코레이터를 적용할 수 있다.
