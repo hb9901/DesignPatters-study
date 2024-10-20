@@ -13,7 +13,7 @@
 | 1주차(10/06)  | Chapter 9    |
 | 2주차(10/13)  | Chapter 12(12-5)   |
 | 3주차(10/20)  | Chapter 12   |
-| 4주차  | Chapter 13   |
+| 4주차(11/23 예정)  | Chapter 13   |
 | 5주차  | Chapter 14   |
 | 6주차  | Chapter 5, 6 |
 | 7주차  | Chapter 8    |
