@@ -489,3 +489,427 @@ export default function Input() {
 - Hook 은 리액트 컴포넌트 전체에 일관성을 부여한다. 클래스는 함수 바인딩과 호출 컨텍스트를 이해해야 하기 때문에 혼란을 줄 수 있다.<br>
 
 -> 클래스형 컴포넌트는 주로 레거시 코드베이스에서 사용되며, 라이프사이클 메서드를 명시적으로 제어하거나 기존 클래스형 컴포넌트를 다룰 때 유용하다.
+
+---
+
+24.10.20
+
+## ✔️ 12.6 정적 가져오기
+
+- `import module from 'module'` -> 정적으로 가져온 모듈
+- 각 모듈은 자바스크립트 엔진이 해당 모듈을 import 하는 코드에 도달하는 즉시 실행된다.
+- 컴포넌트들을 정적으로 가져왔기 때문에, 웹팩은 이 모듈들을 초기번들에 포함시키게 된다.
+- 크기가 큰 번들은 로딩시간에 영향을 미칠 수 있다. <br>
+  (App 컴포넌트가 사용자화면에 내용을 렌더링하려면 먼저 모든 모듈을 로드하고 파싱해야하기 때문)
+
+## ✔️ 12.6 동적 가져오기
+
+### 💠Suspense
+
+: Suspense와 fallback은 **비동기적으로 데이터를 로드하는 컴포넌트를 처리할 때 매우 유용**한 기능이다.<br>
+주로 비동기 렌더링을 보다 쉽게 관리하기 위해 사용된다.
+
+> Suspense는 React가 컴포넌트 렌더링을 일시적으로 중단하고, 비동기 작업(예: 데이터 가져오기)이 완료될 때까지 대기할 수 있게 도와주는 컴포넌트이다.<br>
+> 이때 비동기 작업이 완료되기 전에 대체 UI를 보여줄 수 있다. <br>
+> 즉, 데이터가 아직 로드되지 않았을 때 사용자에게 기다리는 동안 보여줄 UI를 정의하는 데 사용된다.
+
+#### \* 사용사례
+
+- **`코드 스플리팅`** (dynamic import)
+  : 컴포넌트를 처음 렌더링할 때 모든 코드를 한 번에 로드하지 않고, 필요할 때만 코드를 로드하는 방식.
+
+- **`데이터 패칭`**
+  : 서버에서 데이터를 가져오는 동안 UI 를 비동기적으로 렌더링하는 데 사용.
+
+#### \* 사용법
+
+- 동적으로 로드되어야 할 컴포넌트를 감쌈.<br>
+  -> 모듈의 가져오기를 일시적으로 중단시킴으로써 App 컴포넌트가 더 빠르게 내용을 렌더링할 수 있도록 해줌.
+- Suspense 컴포넌트는 일시중단된 컴포넌트가 로딩되는 동안에 대신 렌더링될 컴포넌트를 받는 fallback prop 을 사용한다.
+  <br>
+  -> 이렇게되면 굳이 초기 번들에 추가하지 않고, 별도의 번들로 분리하여 초기 번들 크기를 줄일 수 있다.
+  <br>
+  -> 초기 로딩 속도 빨리짐<br>
+  -> fallback prop 으로 넘겨진 컴포넌트는 애플리케이션이 멈춘것이 아니라 모듈이 처리되고 실행될 때까지 잠시 기다려야 함을 사용자에게 알려준다.
+
+<br>
+
+```jsx
+import React, { Suspense } from "react";
+const LazyComponent = React.lazy(() => import("./LazyComponent"));
+
+function MyComponent() {
+  return (
+    <div>
+      <Suspense fallback={<div>로딩 중...</div>}>
+        <LazyComponent />
+      </Suspense>
+    </div>
+  );
+}
+
+// LazyComponent 는 동적으로 로드되는 컴포넌트이다.
+```
+
+---
+
+### 💠 로더블 컴포넌트
+
+- SSR 애플리케이션에서 Suspense 대신 사용할 수 있는 대안으로, loadable-components 라이브러리가 있다.
+- 리액트 18 부터는 SSR 환경에서도 Suspense 를 사용할 수 있도록 기능이 추가되었다.
+- Suspense 와 마찬가지로, 지연 로딩될 모듈을 loadable에 전달하면 모듈이 요청될 때에만 해당 모듈이 가져와진다.
+- 모듈이 로딩되는 동안에는 fallback 속성으로 넘겨진 컴포넌트를 대신 렌더링할 수 있다.
+
+```jsx
+import React from "react";
+import loadable from "@loadable/component";
+import Send from "./icons/Send";
+import Emoji from "./icons/Emoji";
+
+const EmojiPicker = loadable(() => import("./EmojiPicker"), {
+  fallback: <div id="loading">Loading... </div>,
+});
+
+const ChatInput = () => {
+  const [pickerOpen, tooglePicker] = React.useReducer((state) => !state, false);
+
+  return (
+    <div className="chat-input-container">
+      <input type="text" placeholder="Type a message..." />
+      <Emoji onClick={togglePicker} />
+      {pickerOpen && <EmojiPicker />}
+      <Send />
+    </div>
+  );
+};
+export default ChatInput;
+
+// CSR 에서 가져오기
+import React from "react";
+import loadable from "@loadable/component";
+import Send from "./icons/Send";
+import Emoji from "./icons/Emoji";
+
+const EmojiPicker = loadable(() => import("./components/EmojiPicker"), {
+  fallback: <p id="loading">Loading... </p>,
+});
+
+const ChatInput = () => {
+  const [pickerOpen, tooglePicker] = React.useReducer((state) => !state, false);
+
+  return (
+    <div className="chat-input-container">
+      <input type="text" placeholder="Type a message..." />
+      <Emoji onClick={togglePicker} />
+      {pickerOpen && <EmojiPicker />}
+      <Send />
+    </div>
+  );
+};
+console.log("ChatInput loaded", Date.now())
+
+export default ChatInput;
+```
+
+<br>
+
+### 💠 상호작용 시 가져오기
+
+- 위의 예시에서 사용자가 이모지를 클릭할때 EmojiPicker 컴포넌트를 동적으로 가져왔다.
+- 이러한 유형의 동적 가져오기를 '상호작용 시 가져오기' 라고 한다.
+
+<br>
+
+### 💠 화면에 보이는 순간 가져오기
+
+: 컴포넌트가 사용자에게 보일 때 동적 가져오기를 실행하는 것을 '화면에 보이는 순간 가져오기' 라고 한다.
+
+- 컴포넌트가 현재 화면에 표시되는지 확인하려면 **`IntersectionObserver API`** 를 사용하거나, <br>
+  **`react-loadable-visibility`** 또는 **`react-lazyload`** 와 같은 라이브러리를 활용하여 애플리케이션이 보이는지에 따라 가져오는 기능을 추가할 수 있다.
+
+```jsx
+import React from "react";
+import Send from "./icons/Send";
+import Emoji from "./icons/Emoji";
+import LoadableVisibility from "react-loadable-visibility/react-loadable";
+
+const EmojiPicker = LoadableVisibility({
+  loader: () => import("./EmojiPicker")
+  loading: <p id="loading">Loading</p>
+})
+
+const ChatInput = () => {
+  const [pickerOpen, tooglePicker] = React.useReducer((state) => !state, false);
+
+  return (
+    <div className="chat-input-container">
+      <input type="text" placeholder="Type a message..." />
+      <Emoji onClick={togglePicker} />
+      {pickerOpen && <EmojiPicker />}
+      <Send />
+    </div>
+  );
+};
+console.log("ChatInput loaded", Date.now())
+
+export default ChatInput;
+```
+
+<br>
+
+### 💠 코드 스플리팅
+
+- 여러 경로와 컴포넌트로 구성된 복잡한 애플리케이션에서는 적절한 시기에 정적 및 동적 임포트가 모두 가능하도록 코드를 최적으로 스플리팅(분할)하고 번들링 해야 한다.
+  <br>
+  -> 경로 기반 분할을 사용하거나 웹팩이나 롤업과 같은 최신 번들러를 사용하여 코드를 분할하고 번들링할 수 있다.
+
+### \* 경로 기반 분할
+
+- 특정 페이지나 경로에서만 필요한 리소스가 있을 수 있다.
+- `Suspense / loadable-components / react-router` 같은 라이브러리 사용
+
+<br>
+
+```jsx
+import React, { lazy, Suspense } from "react";
+import { render } from "react-dom";
+import { Switch, Route, BrowserRouter as Router } from "react-router-dom";
+
+const App = lazy(() => import(/* webpackChunkName: "home" */ "./App"));
+const Overview = lazy(() =>
+  import(/* webpackChunkName: "overview" */ "./Overview")
+);
+const Settings = lazy(() =>
+  import(/* webpackChunkName: "settings" */ "./Settings")
+);
+
+render(
+  <Router>
+    <Suspense fallback={<div>Loading...</div>}>
+      <Switch>
+        <Route exact path="/">
+          <App />
+        </Route>
+        <Route exact path="/overview">
+          <Overview />
+        </Route>
+        <Route exact path="/settings">
+          <Settings />
+        </Route>
+      </Switch>
+    </Suspense>
+  </Router>
+  document.getElementById("root")
+);
+
+module.hot.accept();
+```
+
+### \* 번들 분할
+
+- 최신 웹 애플리케이션을 개발할 때 웹팩 또는 롤업과 같은 번들러는 애플리케이션의 소스 코드를 하나 이상의 번들 파일로 묶는다.
+- 사용자가 웹페이지를 방문하면, 필요한 데이터와 기능을 표시하기 위한 특정 번들이 요청되고 로드된다.
+- 불필요한 코드를 포함하는 거대한 번들 하나를 요청하는 대신, 번들을 여러 개의 작은 번들로 분할하는 방법을 사용할 수도 있다.
+
+> #### `번들 크기를 고려해야 할 중요한 지표`
+
+- 번들의 로딩, 처리 및 실행시간을 줄일 수 있다.
+
+1. 첫번째 콘텐츠가 사용자 화면에 표시되는 시간 (**FCP : First Contentful Paint**) 단축
+2. 가장 큰 콘텐츠가 화면에 렌더링되는 시간 (**LCP : Largest Contentful Paint**) 지표 개선
+3. (**TTI : Time to Interactive**) - 모든 콘텐츠가 화면에 표시되고 인터랙티브해지는 데 걸리는 시간.
+
+---
+
+<br>
+
+### 💠 PRPL 패턴
+
+: 애플리케이션이 최대한 효율적으로 로드될 수 있도록 하려면 **PRPL(Push Render Pre-cache Lazy-load)** 패턴을 사용할 수 있다.
+
+- 초기 접근 경로의 화면이 사용자 기기에 표시되기 전에 다른 리소스가 요청되거나 렌더링되지 않도록 보장한다.
+- 초기 경로가 성공적으로 로드되면, 서비스 워커가 설치되어 자주 방문하는 다른 경로의 리소스를 백그라운드에서 가져온다.
+- 이 데이터는 백그라운드에서 가져오므로 사용자는 어떠한 지연이나 로딩도 느낄 수 없다.
+- 사용자가 서비스 워커에 의해 캐시된 경로로 이동하려는 경우, 서비스 워커는 서버에 요청을 보내는 대신 캐시에서 필요한 리소스를 빠르게 가져올 수 있다.
+- 자주 방문하지 않는 경로에 대한 리소스는 이후에 동적으로 가져올 수 있다.
+
+> #### `핵심 성능 고려사항`
+
+- **푸시 (Push)** : 중요한 리소스를 효율적으로 푸시하여, 서버 왕복 횟수를 최소화하고 로딩 시간을 단축한다.
+- **렌더링 (Render**) : 사용자 경험을 개선하기 위해 초기 경로를 최대한 빠르게 렌더링한다.
+- **사전 캐싱 (Pre-cache)** : 자주 방문하는 경로의 에셋(asset) 을 백그라운드에서 미리 캐싱하여 서버 요청 횟수를 줄이고 더 나은 오프라인 경험을 제공한다.
+- **지연 로딩 (Lazy-load)** : 자주 요청되지 않는 경로나 에셋은 지연 로딩한다.
+
+<br>
+
+### 💠 로딩 우선 순위
+
+: 필요하다고 예상되는 특정 리소스를 우선적으로 요청하도록 설정한다.
+
+- Preload`(<link rel="preload">)` 는 브라우저의 최적화 기능으로, 브라우저가 늦게 요청할 수도 있는 중요한 리소스를 더 일찍 요청할 수 있도록 한다.
+- 주요 리소스의 로딩 순서를 수동으로 지정한다면, 핵심 웹 지표(CWV : Core Web Vitals) 의 로딩 성능 및 지표에 긍정적인 영향을 미칠 수 있다.
+- TTI (Time to Interactive) / FID (First Input Delay) 와 같은 지표를 최적화할 때 preload 는 상호작용에 필요한 자바스크립트 번들(또는 청크 chunk) 을 로드하는 데 유용하다.
+
+#### \* 주의점
+
+- 상호작용에 필요한 리소스를 먼저 로딩하다가 FCP(First Contentful Paint) 또는 LCP(Largest Contentful Paint) 에 필요한 리소스의 로딩이 지연되는 일은 피해야 한다.
+- 자바스크립트 자체의 로딩을 최적화하려면, `<body>` 태그보다는 `<head>` 태그 안에서 `<script defer>` 를 사용하는 것이 해당 리소스를 초기에 로딩하는 데 도움이 된다.
+
+```jsx
+<link rel="preload" href="emoji-picker.js" as="script"/>
+...
+ </head>
+ <body>
+  ...
+  <script src="stickers.js" defer></script>
+  <script src="video-sharing.js" defer></script>
+  <script src="emoji-picker.js" defer></script>
+```
+
+<br>
+
+### 💠 SPA 의 Preload
+
+- Prefetching 은 곧 요청될 가능성이 있는 리소스를 캐시하는 좋은 방법이지만, 즉시 사용해야 하는 리소스의 경우에는 preload 를 사용할 수 있다.
+- 브라우저가 인터넷 연결 상태와 대역폭을 고려하여 어떤 리소스를 미리 가져올지 결정하는 prefetch 와 달리,
+  미리 로드(preload) 된 리소스는 어떤 상황에서든 무조건 미리 로드된다.
+
+<br>
+
+### 💠 Preload + async 기법
+
+: 브라우저가 스크립트를 높은 우선순위로 다운로드 하면서도, 스크립트를 기다리는 동안 파싱이 멈추지 않도록 하려면 `Preload + async` 기법을 활용할 수 있다.
+
+- preload는 다른 리소스의 다운로드를 지연시킬 수 있지만, 얻을 수 있는 이점을 위해서 감수해야하는 트레이드오프이다.
+
+```jsx
+<link rel="preload" href="emoji-picker.js" as="script"/>
+<script src="emoji-picker.js" async></script>
+```
+
+<br>
+
+### 💠 크롬 95+ 버전에서의 Preload
+
+: 큐 점핑 동작이 개선되어 preload 기능이 더 안전해졌다.
+
+- HTTP 헤더에 preload 를 넣으면 다른 모든 리소스보다 우선적으로 로드된다.
+- 일반적으로 중간 레벨 이상의 우선순위를 가진 preload는 파서가 HTML 을 처리하는 순서대로 로드되므로, HTML 시작 부분에 preload 를 넣을 때 주의해야 한다.
+- 미리 로드되는 폰트는 `<head>` 태그 끝 부분이나 `<body>` 태그 시작 부분에 넣는 것이 가장 좋다.
+- 미리 로드되는 모듈을 가져오는 건 실제 스크립트가 먼저 로드/파싱되도록 해당 가져오기가 필요한 `<script>` 태그 다음에 위치해야 한다.
+- 이미지 preload 는 기본적으로 우선순위가 낮으며, 비동기 스크립트 및 기타 낮은/최저 우선순위 태그와 관련하여 순서를 지정해야 한다.
+
+<br>
+
+---
+
+## ✔️ 리스트 가상화
+
+: 대규모 데이터 리스트의 렌더링 성능을 향상시키는 기술
+
+- 전체 목록을 모두 렌더링하는 대신 현재 화면에 보이는 행만 동적으로 렌더링한다.
+- 렌더링 되는 행은 전체 목록의 일부이며, 사용자가 스크롤함에 따라 보이는 영역(윈도우)이 이동한다.
+- 리액트에서는 **`react-virtualized`** 같은 라이브러리를 사용하여 구현할 수 있다.
+- 스크롤되는 뷰포트 내에서 현재 보이는 항목만 렌더링하므로, 한 번에 수천개의 행 데이터를 렌더링 하는 데 드는 리소스를 절약할 수 있다.
+
+<br>
+
+### 💠 윈도잉/가상화의 작동방식
+
+: 리스트 가상화는 현재 회면에 보이는 항목만 렌더링하여 성능을 최적화하는 기술.
+
+> #### react-virtualized 작동 방식
+
+- 상대적인 위치(position: relative) 를 가진 작은 컨테이너 DOM 요소 (예: `<ul>`) 를 윈도우로 사용한다.
+- 스크롤을 위한 큰 DOM 요소를 가진다.
+- 컨테이너 내부에 자식 요소를 절대 위치(position: absolute) 로 배치하고, top, left, width, height 등의 스타일을 설정한다.
+- 한 번에 수천 개의 목록 요소를 렌더링하여 초기 렌더링 속도 저하 또는 스크롤 성능 저하를 유발하는 대신, 가상화는 사용자에게 보이는 항목만 렌더링하는 데 집중한다.
+
+### \* react- window
+
+### 💠 List 컴포넌트
+
+: 윈도잉된 리스트의 아이템을 렌더링한다.
+
+- 화면에 보이는 행만 사용자에게 전달된다.
+- List 컴포넌트는 내부적으로 Grid 컴포넌트를 사용하여 행을 렌더링하고, prop 을 전달한다.
+
+#### \* 리액트를 사용한 리스트(itemsArray) 렌더링
+
+```jsx
+import React from "react";
+import ReactDOM from "react-dom";
+
+const itemsArray = [
+  { name: "Drake" },
+  { name: "Halsey" },
+  { name: "Camillo Cabello" },
+  { name: "Travis Scott" },
+  { name: "Bazzi" },
+  { name: "Lil Wayne" }, ...
+];
+
+const Row = ({ index, style }) => (
+  <div className={index % 2 ? "ListItemOdd" : "ListItemEven"} style={style}>
+    {itemsArray[index].name}
+  </div>
+);
+
+const Example = () => (
+  <div
+    style=
+    class="List"
+  >
+    {itemsArray.map((item, index) => Row({ index }))}
+  </div>
+);
+
+ReactDOM.render(<Example />, document.getElementById("root"));
+```
+
+#### \* react-window 이용한 데이터 리스트 렌더링
+
+```jsx
+import React from "react";
+import ReactDOM from "react-dom";
+import { FixedSizeList as List } from "react-window";
+
+const itemsArray = [...];
+
+const Row = ({ index, style }) => (
+  <div className={index % 2 ? "ListItemOdd" : "ListItemEven"} style={style}>
+    {itemsArray[index].name}
+  </div>
+);
+
+const Example = () => (
+  <List
+    className="List"
+    height={150}
+    itemCount={itemsArray.length}
+    itemSize={35}
+    width={300}
+  >
+    {Row}
+  </List>
+);
+
+ReactDOM.render(<Example />, document.getElementById("root"));
+```
+
+<br>
+
+### 💠 Grid 컴포넌트
+
+: 수직 및 수평 방향으로 가상화된 표 형태의 데이터를 렌더링한다.
+
+- 수평/수직의 현재 스크롤 위치에 따라 필요한 Grid 셀만 렌더링한다.
+
+### 💠 웹 플랫폼의 발전
+
+#### \* content-visibility: auto
+
+: 화면 밖 콘텐츠의 렌더링과 페인팅을 필요한 시점까지 지연할 수 있다.
+
+- 동적인 콘텐츠 목록을 렌더링하는 경우에는 여전히 react-window 와 같은 라이브러리를 사용하는 것이 좋다.
+- 화면 밖 요소를 display: none 으로 설정하거나 DOM 노드를 제거하는 등의 방식으로 렌더링 성능을 최적화한다.
