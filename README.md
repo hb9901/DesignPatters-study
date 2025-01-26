@@ -10,18 +10,18 @@
 
 | 주차   | 챕터         |
 | ------ | ------------ |
-| 1주차(10/06)  | Chapter 9    |
-| 2주차(10/13)  | Chapter 12(12-5)   |
-| 3주차(10/20)  | Chapter 12   |
-| 4주차(11/23 예정)  | Chapter 13   |
-| 5주차  | Chapter 14   |
-| 6주차  | Chapter 5, 6 |
-| 7주차  | Chapter 8    |
-| 8주차  | Chapter 7    |
-| 9주차  | Chapter 7    |
-| 10주차 | Chapter 7    |
-| 11주차 | Chapter 10   |
-| 12주차 | Chapter 11   |
+| ✅1주차(10/06)  | Chapter 9    |
+| ✅2주차(10/13)  | Chapter 12(12-5)   |
+| ✅3주차(10/20)  | Chapter 12   |
+| ✅4주차(1/19)  | Chapter 13   |
+| 5주차(1/26)  | Chapter 14   |
+| 6주차(2/2)  | Chapter 5, 6 |
+| 7주차(2/9)  | Chapter 8    |
+| 8주차(2/16)  | Chapter 7    |
+| 9주차(2/23)  | Chapter 7    |
+| 10주차(3/2) | Chapter 7    |
+| 11주차(3/9) | Chapter 10   |
+| 12주차(3/16) | Chapter 11   |
 
 ---
 
